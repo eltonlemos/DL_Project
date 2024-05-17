@@ -21,20 +21,15 @@ import pandas as pd
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
-        self.cn = nn.Conv1d(4, 8, 8, 8)
-        # self.pool = nn.AvgPool1d(4,4)
-        self.fc1 = nn.Linear(1080, 256)
-        self.fc2 = nn.Linear(256, 128)
-        # self.fc3 = nn.Linear(126, 70)
-        self.fc4 = nn.Linear(128, 70)  
+        self.fc1 = nn.Linear(1080, 2048)
+        self.fc2 = nn.Linear(2048, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.fc4 = nn.Linear(256, 70)  
 
     def forward(self, x):
-        x = F.relu(self.cn(x))
-        # x = self.pool(x)
-        x = torch.flatten(x, -2)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        # x = F.relu(self.fc3(x))
+        x = F.relu(self.fc3(x))
         x = self.fc4(x) 
         return x
 
@@ -45,7 +40,7 @@ class Car:
         self.vision_thresh=400
         # self.tn= time.time()
         self.max_speed= 7
-        self.max_acc=0.05
+        self.max_acc=0.1
         self.time_start = time.time()
         self.has_begun=False
         self.Kd = 3.5
@@ -78,26 +73,24 @@ class Car:
         self.t = 100
         self.wheelbase=0.324
 
-        self.episodes = 0
-        self.current_ep = 0
         self.observation_space = 1080
         self.action_space = [i for i in range(70)]
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')    
         self.gamma=0.8
         self.alpha=0.3
         self.i=1
-        self.epsilon=0.6
+        self.epsilon=1
         self.Q = Net()
         self.Qphi = Net()
         self.Q = self.Q.to(self.device)
         self.Qphi = self.Qphi.to(self.device)
         self.D = []
-        self.len_d = 5000
+        self.len_d = 10000
         self.C = 5
         self.replay_interval = 10
-        self.batch_size = 2048
+        self.batch_size = 8192
         self.loss_fn = nn.MSELoss()
-        self.lr=0.00001
+        self.lr=0.0001
         self.optimizer = optim.Adam(self.Q.parameters(), self.lr)
         self.terminated = False
         self.truncated = False
@@ -176,8 +169,8 @@ class Car:
 
         self.drive()
         if self.reward is None:
-            if self.current_ep < 1250:
-                self.reward = self.speed * 0.3
+            if self.speed>0:
+                self.reward = self.speed * 0.5
             else:
                 self.reward = 0
 
@@ -261,14 +254,14 @@ class Car:
                 self.has_begun=True
             if t > 60:
                 self.truncated = True
-                self.reward = -100
+                self.reward = -500
             # print(f"{(time.time()- self.flip_check_t )}")
             if (time.time()- self.flip_check_t ) > 2:
                 d = np.linalg.norm(np.array(self.old_p) - np.array([x,y]))
                 # print(f"{d}")
                 if d<0.1:
                     self.truncated = True
-                    self.reward = -100
+                    self.reward = -1000
                     print(f"Car flipped")
                 self.old_p = [x,y]
                 self.flip_check_t = time.time()
@@ -313,11 +306,9 @@ class Car:
         self.collision_counter+=1
         if self.collision_counter %3 ==0:
             self.truncated = True
-            # self.reward = -100* abs(self.speed) - 50
-            self.reward = -200
+            self.reward = -100* abs(self.speed) - 50
         else:
-            # self.reward = -60* abs(self.speed) - 50
-            self.reward = -100
+            self.reward = -60* abs(self.speed) - 50
         # self.speed = 0
         print(f"There was a crash")
                     
@@ -347,28 +338,22 @@ class Car:
 def race_train():
 
     agent = Car()
-    # with open('/home/cse4568/catkin_ws/race_car.pickle_1762', 'rb') as file:
-    #     agent.Q = pickle.load(file)
-    # print(agent.Q)
-    # agent.epsilon = 0
+    
+    
     reward_per_episode=np.empty((1,0))
     epsilon_values=np.empty((1,0))
-    agent.episodes = 2000
-    agent.i=(0.01/1)**(1/(0.6*agent.episodes))
+    episodes = 2000
+    agent.i=(0.01/1)**(1/episodes)
     agent.listener()
     t = []
 
     count=0
-    for i in range(agent.episodes):
-
-        agent.current_ep = i
+    for i in range(episodes):
         agent.speed=0
         old_col=0
         agent.reset_car()
         # time.sleep(4)
         obs = agent.distances.copy()
-        obs = np.stack([obs,obs,obs,obs])
-        # print(obs.shape)
         # print(obs)
         # obs = obs[agent.min_index:agent.max_index]
         # print(obs)
@@ -393,21 +378,37 @@ def race_train():
             # time.sleep(0.1)
             terminated, truncated = agent.terminated, agent.truncated
             reward = agent.reward
-            st = s[1:,:]
-            obs = torch.cat([st,torch.FloatTensor(agent.obs).unsqueeze(0)], 0)
-            # print(obs.shape)
+            obs = torch.FloatTensor(agent.obs)
+            # agent.reward = None
+            # obs_count=0
+            # obs = []
+            # while obs_count<5:
+            #     if agent.obs is not None:
+            #         obs.append(agent.obs)
+            #         agent.obs = None
+            #         obs_count+=1
             reward = agent.reward
+            # obs = obs[agent.min_index:agent.max_index]
+            # obs= np.append(obs,agent.speed)
+            # obs = torch.FloatTensor(obs)
+            # print(f"{action*agent.speed_const} , {reward}")
+
+            # obs, reward, terminated, truncated, info = env.step(action)
             
             if len(agent.D)<=(agent.len_d-1):
                 agent.D.append([s,action,reward,obs,terminated,truncated])
             else:
                 agent.D.pop(0)
                 agent.D.append([s, action, reward, obs, terminated, truncated])
-
+            # if count % agent.replay_interval == 0:
+            #     count=0
+            #     # print(f"leaarning: {time.time()}")
+            #     agent.learn()
+                # print(f"learnt {time.time()}")
             s = obs
             cumulative_reward+=reward
-        if (agent.t<36) and (agent.collision_counter == 0):
-            with open('/home/cse4568/catkin_ws/race_car_base'+str(i)+".pickle", 'wb') as f:
+        if (agent.t<27) and (agent.collision_counter == 0):
+            with open('/home/cse4568/catkin_ws/race_car.pickle_'+str(i), 'wb') as f:
                 pickle.dump(agent.Q, f)
         t.append(agent.t)
         agent.t = 100
@@ -425,62 +426,53 @@ def race_train():
 
 def race_test(agent):
 
+    # agent = Car()
+    
     reward_per_episode=np.empty((1,0))
     epsilon_values=np.empty((1,0))
     episodes=50
     agent.epsilon = 0
     agent.listener()
 
-    t = []
-
     count=0
     for i in range(episodes):
         agent.speed=0
-        old_col=0
         agent.reset_car()
-
         # time.sleep(4)
         obs = agent.distances.copy()
-        obs = np.stack([obs,obs,obs,obs])
-        print(obs.shape)
-        # print(obs)
-        # obs = obs[agent.min_index:agent.max_index]
-        # print(obs)
         # obs= np.append(obs,agent.speed)
         # print(f"{obs.shape}")
         agent.terminated, agent.truncated = False, False
         terminated, truncated = False, False
         cumulative_reward=0
-        s = torch.FloatTensor(obs)
         
         while not (terminated or truncated):
             count+=1
+            
+            if agent.reward is None:
+                continue
 
-            action = agent.step(s)
+            action = agent.step(obs)
             agent.calculate_speed(action)
             if old_col != agent.collision_counter:
                 old_col +=1
             else:
                 agent.reward = None
-            while agent.reward is None:
-                pass
+            
+            time.sleep(0.1)
             terminated, truncated = agent.terminated, agent.truncated
+            while agent.reward is not None:
+                pass
             reward = agent.reward
-            st = s[1:,:]
-            obs = torch.cat([st,torch.FloatTensor(agent.obs).unsqueeze(0)], 0)
 
-            # print(obs.shape)
-            # agent.reward
-            reward = agent.reward
-            s = obs
+            obs = torch.FloatTensor(agent.obs)
+            # obs= np.append(obs,agent.speed)
             cumulative_reward+=reward
-        t.append(agent.t)
-        agent.t = 100
         print(f"Episode number: {i} reward: ({cumulative_reward})")
         reward_per_episode = np.append(reward_per_episode,cumulative_reward)
         epsilon_values = np.append(epsilon_values,agent.epsilon)
-        agent.epsilon = 0
-
+        t.append(agent.t)
+        agent.t = 100
 
     return reward_per_episode, epsilon_values, t, agent
 
@@ -540,7 +532,7 @@ if __name__ == "__main__":
 
     df.to_csv('/home/cse4568/catkin_ws/output.csv', index=False)
 
-    rpe, ev,t, agent = race_test(agent)
+    rpe, ev, agent = race_test(agent)
 
     plt.figure()
     plt.plot(rpe)
@@ -570,7 +562,7 @@ if __name__ == "__main__":
 
     df = pd.DataFrame({
     'Column1': rpe,
-    'Column2': t
+    'Column2': ev
     })
     df.to_csv('output2.csv', index=False)
 
