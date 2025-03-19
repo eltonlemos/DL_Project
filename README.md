@@ -36,7 +36,8 @@ This README file provides instructions on how to set up VMware, install ROS with
 2. **Run the ROS Node:**
 Use the `rosrun` command to run the specific file you need. For detailed instructions on understanding and running ROS nodes, refer to the following tutorial:
 [Understanding ROS Nodes](https://wiki.ros.org/ROS/Tutorials/UnderstandingNodes)
-example
+
+Example
    ```sh
    rosrun DL_Project run.py
 
