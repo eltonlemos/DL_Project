@@ -1,51 +1,107 @@
-## Overview
+# **Dynamic Speed Optimization for Autonomous Vehicles using Reinforcement Learning (RL)**
 
-This README file provides instructions on how to set up VMware, install ROS with a catkin workspace, and configure the F1-10th autonomous vehicle simulator. Follow the steps carefully to ensure a smooth setup and execution of our reinforcement learning (RL) model for autonomous vehicle speed optimization.
+## **Overview**
+This repository provides a step-by-step guide to setting up a **VMware-based ROS environment** and configuring the **F1-10th autonomous vehicle simulator** to train a reinforcement learning (RL) model for **autonomous vehicle speed optimization**. 
 
-## Step 1: VMware and ROS Setup
+## **Installation & Setup**
 
-1. **Install VMware:**
-   Follow the detailed instructions on the Drones Lab Robotics Algorithms resources page to install VMware:  
-   [VMware Setup Instructions](https://droneslab.github.io/RoboticsAlgorithms/resources/)
+### **Step 1: VMware and ROS Installation**
+1. **Install VMware**  
+   Follow the detailed installation guide available on the **Drones Lab Robotics Algorithms resources page**:  
+   📌 [VMware Setup Instructions](https://droneslab.github.io/RoboticsAlgorithms/resources/)
 
-2. **Install ROS:**
-   Once VMware is set up, continue with the ROS installation on your virtual machine using the same link:  
-   [ROS Setup Instructions](https://droneslab.github.io/RoboticsAlgorithms/resources/)
+2. **Install ROS (Robot Operating System)**  
+   After setting up VMware, proceed with ROS installation on your virtual machine by following:  
+   📌 [ROS Setup Instructions](https://droneslab.github.io/RoboticsAlgorithms/resources/)
 
-## Step 2: Create a Catkin Workspace
+### **Step 2: Catkin Workspace Setup**
+1. **Create a Catkin Workspace**  
+   Set up a ROS catkin workspace to manage packages. Follow this tutorial:  
+   📌 [Creating a Catkin Workspace](https://wiki.ros.org/catkin/Tutorials/CreatingPackage)
 
-1. **Create a New Catkin Workspace:**
-   Follow the tutorial on the ROS wiki to create a new catkin workspace:  
-   [Creating a Catkin Workspace](https://wiki.ros.org/catkin/Tutorials/CreatingPackage)
-
-2. **Copy Our Code:**
-   After building the catkin workspace, navigate to the `src` folder within your catkin workspace directory. Copy our provided code into this `src` folder.
-
-3. **Build the Workspace:**
-   Open a terminal, navigate to the root of your catkin workspace, and run the following command to build the workspace:
+2. **Clone and Copy the Project Code**  
+   Navigate to your `catkin_ws/src/` directory and copy the project files into it:
    ```sh
+   cd ~/catkin_ws/src
+   git clone <repository_link>
+   ```
+
+3. **Build the Workspace**  
+   Navigate to the root of your workspace and compile:
+   ```sh
+   cd ~/catkin_ws
    catkin_make
+   ```
 
-## Step 3: Run the Code
-
-1. **Source the Setup File:**
-  Before running the ROS nodes, source the setup file by executing the following command in your terminal:
+### **Step 3: Running the Code**
+1. **Source the ROS Setup File**  
+   Before executing the ROS nodes, run:
    ```sh
    source devel/setup.bash
+   ```
 
-2. **Run the ROS Node:**
-Use the `rosrun` command to run the specific file you need. For detailed instructions on understanding and running ROS nodes, refer to the following tutorial:
-[Understanding ROS Nodes](https://wiki.ros.org/ROS/Tutorials/UnderstandingNodes)
-
-   Example
+2. **Run the ROS Node**  
+   Use the `rosrun` command to start the RL model:
    ```sh
    rosrun DL_Project run.py
+   ```
+   For more details on ROS nodes:  
+   📌 [Understanding ROS Nodes](https://wiki.ros.org/ROS/Tutorials/UnderstandingNodes)
 
-## Step 4: Setup the F1-10th Autonomous Vehicle Simulator
+---
 
-1. **Follow Simulator Setup Instructions:**
-Use the link below to access clear instructions on setting up, running, and using the Drones Lab F1-10th simulator:
-[F1-10th Simulator Setup Instructions](https://liberating-dash-9ac.notion.site/F1Tenth-Simulator-Setup-5a013b6a723b490cbf6881a42a94d63f)
+## **F1-10th Autonomous Vehicle Simulator Setup**
+To install and configure the F1-10th autonomous vehicle simulator, follow the step-by-step instructions provided here:  
+📌 [F1-10th Simulator Setup Instructions](https://liberating-dash-9ac.notion.site/F1Tenth-Simulator-Setup-5a013b6a723b490cbf6881a42a94d63f)
 
-## Conclusion
-By following the steps outlined above, you will set up the necessary environment to run our RL model for autonomous vehicle speed optimization. Ensure you follow each step carefully and refer to the provided links for detailed instructions.
+### **Simulator Features**
+- **Unity-based realistic simulation**
+- **ROS Integration** for real-time control and data processing
+- **Lidar & Odometry sensor emulation** for navigation and obstacle detection
+- **Multiple Race Tracks** for model testing under various conditions
+
+---
+
+## **Project Architecture**
+This project integrates **Deep Q-Network (DQN) reinforcement learning** with a **ROS-powered simulation** to optimize vehicle speed dynamically.  
+
+### **Key Components**
+1. **Simulator** – Provides a controlled environment with realistic physics, lidar data, and environmental effects.
+2. **Reinforcement Learning Model (DQN)** – Learns an optimal speed control policy using lidar sensor data.
+3. **Neural Network (NN)** – Processes sensor observations and predicts optimal acceleration/deceleration.
+4. **Reward System** – Encourages safe navigation while optimizing lap times.
+5. **PID Steering Control** – Ensures the RL model focuses solely on speed optimization, with an independent PID controller managing steering.
+
+---
+
+## **Performance Evaluation**
+This project went through multiple iterations to refine the RL model. **Key improvements** included:
+- **Curriculum Training** – First trained the model for speed, then introduced safety constraints.
+- **Improved Reward Structuring** – Balanced speed incentives with penalties for collisions.
+- **Neural Network Refinements** – Experimented with CNNs and dense networks to enhance learning.
+- **Early Stopping Mechanism** – Prevented the model from overfitting to unsafe driving behaviors.
+
+### **Final Results**
+- **Lap Completion Time**: RL model completed 2 laps in **36 minutes**, compared to a PID controller's **32 minutes**.
+- **Adaptability**: The RL model dynamically adjusted speed based on real-time conditions.
+- **Safety Improvements**: Crashes reduced significantly after fine-tuning reward mechanisms.
+
+---
+
+## **Limitations & Future Work**
+🔸 **Long Training Time** – Training took approximately **23 hours** due to computational complexity.  
+🔸 **Steering Optimization** – Future work should explore **Actor-Critic (A2C)** or **DDPG algorithms** for better control.  
+🔸 **Diverse Scenarios** – Extend training to include **more complex environments** and **real-world driving conditions**.  
+
+---
+
+## **Contributors**
+- **Elton Roque Lemos** (*SUNY Buffalo*)  
+- **Yamini Ramesh** (*SUNY Buffalo*)  
+
+Special thanks to **Professor Changyou Chen** for guidance and mentorship.
+
+---
+
+## **References**
+📖 [Research Paper on RL-Based Speed Optimization](link_to_paper)
