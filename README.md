@@ -2,6 +2,7 @@
 
 ## **Overview**
 This repository provides a step-by-step guide to setting up a **VMware-based ROS environment** and configuring the **F1-10th autonomous vehicle simulator** to train a reinforcement learning (RL) model for **autonomous vehicle speed optimization**. 
+
 ![ra](https://github.com/user-attachments/assets/4273e197-a467-4181-94fd-13c35e6e3c14)
 
 ## **Installation & Setup**
